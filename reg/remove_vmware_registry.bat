@@ -157,6 +157,46 @@ call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "v
 call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse\Parameters" ""
 call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" ""
 
+:: --- vsock Service Registry Entries ---
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Type"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Start"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "ErrorControl"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Tag"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "ImagePath"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "DisplayName"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Description"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Group"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Owners"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "vwdk.installers"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" "0"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" "Count"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" "NextInstance"
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" ""
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Parameters" ""
+call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" ""
+
+:: --- Delete vsock from ALL ControlSets (prevent reboot re-registration) ---
+echo.
+echo [INFO] Cleaning vsock from all registry ControlSets...
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0delete_vsock_all_controlsets.ps1"
+if %errorlevel% neq 0 (
+    echo [WARNING] ControlSet cleanup returned error code: %errorlevel%
+) else (
+    echo [SUCCESS] ControlSet cleanup completed
+)
+echo.
+
+:: --- Delete Winsock registry entries from ALL ControlSets (prevent catalog rebuild) ---
+echo.
+echo [INFO] Cleaning Winsock registry entries from all ControlSets...
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0delete_winsock_registry.ps1"
+if %errorlevel% neq 0 (
+    echo [WARNING] Winsock registry cleanup returned error code: %errorlevel%
+) else (
+    echo [SUCCESS] Winsock registry cleanup completed
+)
+echo.
+
 :: --- VMware Software Registry Entries (from vmwreg.txt) ---
 call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\CbLauncher" "Cb.LauncherVersion"
 call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\CbLauncher" "Cb.InstallStatus"
@@ -196,6 +236,25 @@ echo Summary:
 echo   Deleted: %DELETED% entries
 echo   Errors: %ERRORS% entries
 echo ===============================================================
+echo.
+echo ===============================================================
+echo  Post-Registry Winsock Cleanup
+echo ===============================================================
+echo.
+echo [INFO] Running Winsock cleanup to remove any re-registered providers...
+echo.
+
+:: Call PowerShell script to clean up Winsock catalog after registry deletion
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0cleanup_winsock_after_registry.ps1"
+
+if %errorlevel% neq 0 (
+    echo [WARNING] Winsock cleanup script returned error code: %errorlevel%
+    echo [INFO] Continuing anyway - check winsock_cleanup_post_registry.log for details
+) else (
+    echo [SUCCESS] Winsock cleanup completed
+)
+
+echo.
 goto :EOF
 
 :: --- Subroutine: Delete registry entry ---
