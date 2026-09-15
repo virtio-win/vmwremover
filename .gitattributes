@@ -1,0 +1,10 @@
+# Windows batch scripts must have CRLF endings or cmd.exe mis-resolves
+# labels (call/goto), so force it regardless of the checkout platform.
+*.bat text eol=crlf
+
+# PowerShell is fine with either; keep it CRLF for Windows consistency.
+*.ps1 text eol=crlf
+
+# Data files are read by `for /f`; keep them LF so no trailing \r is
+# pulled into tokens (e.g. a driver name would become "vmci\r").
+*.txt text eol=lf

@@ -1,195 +1,102 @@
-#requires -Version 3.0
-#requires -RunAsAdministrator
-
 <#
 .SYNOPSIS
-    Delete VMware vSockets Winsock registry entries from ALL ControlSets.
+    Remove the VMware vSockets Winsock2 catalog entries across ALL
+    ControlSets (raw-registry scrub).
 
 .DESCRIPTION
-    Windows stores Winsock provider information in TWO places:
-    1. Runtime catalog (accessed by netsh winsock show catalog)
-    2. Registry (HKLM\SYSTEM\ControlSetXXX\Services\WinSock2\Parameters)
+    Optional PowerShell augmentation for the VMware leftover cleanup.
+    The batch baseline (reg\remove_vmware_winsock.bat) deregisters the
+    VMware vSockets provider from the LIVE catalog via netsh, but that
+    only touches the current control set. Windows stores the Winsock2
+    catalog under each control set:
 
-    When we use "netsh winsock remove provider", it removes from the runtime
-    catalog. But if the registry entries still exist, Windows can REBUILD
-    the catalog from registry on boot!
+        HKLM\SYSTEM\<ControlSetNNN>\Services\WinSock2\Parameters\
+            Protocol_Catalog9\Catalog_Entries\*
+            NameSpace_Catalog5\Catalog_Entries\*
 
-    This script deletes the Winsock registry entries for VMware vSockets
-    from ALL ControlSets to prevent catalog rebuild on boot.
+    Each entry stores a binary PackedCatalogItem blob that embeds the
+    provider GUID. Matching a GUID inside a REG_BINARY value is not
+    practical in batch, so it is done here: we search the blob for the
+    16-byte (mixed-endian) form of the VMware vSockets provider GUID
+    and delete matching entries in every control set.
 
-.NOTES
-    Called by remove_vmware_registry.bat AFTER ControlSet cleanup and
-    BEFORE netsh Winsock cleanup.
+    Best-effort: never throws to the caller. Exit 3010 if anything was
+    deleted (reboot recommended); 0 otherwise.
 
-    VMware vSockets GUID: {570ADC4B-67B2-42CE-92B2-ACD33D88D842}
+    NOTE: this edits raw catalog entries but does NOT renumber the
+    remaining ones. Pair it with a "netsh winsock reset" (done by the
+    batch baseline) so the catalog is reindexed on the live system.
 #>
 
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = 'Continue'
+$deleted = 0
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$LogFile = Join-Path $ScriptDir "delete_winsock_registry.log"
+# VMware vSockets provider GUID, as the mixed-endian byte sequence used
+# in the packed catalog blob (Data1/2/3 little-endian, Data4 big-endian -
+# exactly what [Guid]::ToByteArray() produces).
+$vsockGuid  = [Guid]'570ADC4B-67B2-42CE-92B2-ACD33D88D842'
+$guidBytes  = $vsockGuid.ToByteArray()
 
-# VMware vSockets GUID
-$VMwareVsockGUID = "570ADC4B-67B2-42CE-92B2-ACD33D88D842"
-
-# Initialize log
-"===============================================================" | Out-File $LogFile
-"  Delete Winsock Registry Entries - $(Get-Date)" | Out-File $LogFile -Append
-"===============================================================" | Out-File $LogFile -Append
-"" | Out-File $LogFile -Append
-
-Write-Host ""
-Write-Host "===============================================================" -ForegroundColor Cyan
-Write-Host "  Deleting VMware vSockets Winsock Registry Entries" -ForegroundColor Cyan
-Write-Host "===============================================================" -ForegroundColor Cyan
-Write-Host ""
-
-$TotalDeleted = 0
-$TotalNotFound = 0
-
-try {
-    # Find all ControlSet* keys
-    Write-Host "[INFO] Searching for ControlSet keys..." -ForegroundColor Cyan
-    "[INFO] Searching for ControlSet keys..." | Out-File $LogFile -Append
-
-    $ControlSets = Get-ChildItem -Path "HKLM:\SYSTEM" -ErrorAction SilentlyContinue |
-                   Where-Object { $_.PSChildName -match '^ControlSet\d{3}$' }
-
-    if ($ControlSets.Count -eq 0) {
-        Write-Host "[WARNING] No ControlSet keys found!" -ForegroundColor Yellow
-        "[WARNING] No ControlSet keys found" | Out-File $LogFile -Append
-        exit 1
+function Test-BytesContain {
+    param([byte[]]$Haystack, [byte[]]$Needle)
+    if ($null -eq $Haystack -or $Haystack.Length -lt $Needle.Length) { return $false }
+    $last = $Haystack.Length - $Needle.Length
+    for ($i = 0; $i -le $last; $i++) {
+        $match = $true
+        for ($j = 0; $j -lt $Needle.Length; $j++) {
+            if ($Haystack[$i + $j] -ne $Needle[$j]) { $match = $false; break }
+        }
+        if ($match) { return $true }
     }
+    return $false
+}
 
-    Write-Host "[INFO] Found $($ControlSets.Count) ControlSet(s)" -ForegroundColor Cyan
-    "[INFO] Found $($ControlSets.Count) ControlSet(s)" | Out-File $LogFile -Append
-    Write-Host ""
+Write-Output "=== Remove VMware Winsock catalog entries (all ControlSets) ==="
 
-    # Process each ControlSet
-    foreach ($controlSet in $ControlSets) {
-        $controlSetName = $controlSet.PSChildName
+$controlSets = Get-ChildItem -Path 'HKLM:\SYSTEM' -ErrorAction SilentlyContinue |
+    Where-Object { $_.PSChildName -match '^ControlSet\d{3}$' }
 
-        Write-Host "[PROCESSING] $controlSetName..." -ForegroundColor Cyan
-        "[PROCESSING] $controlSetName" | Out-File $LogFile -Append
+$catalogs = @('Protocol_Catalog9', 'NameSpace_Catalog5')
 
-        # Winsock2 namespace providers path
-        $namespacePath = "HKLM:\SYSTEM\$controlSetName\Services\WinSock2\Parameters\NameSpace_Catalog5\Catalog_Entries"
+foreach ($cs in $controlSets) {
+    foreach ($cat in $catalogs) {
+        $entriesPath = "HKLM:\SYSTEM\$($cs.PSChildName)\Services\WinSock2\Parameters\$cat\Catalog_Entries"
+        if (-not (Test-Path $entriesPath)) { continue }
 
-        if (Test-Path $namespacePath) {
-            Write-Host "  [INFO] Checking namespace providers..." -ForegroundColor Cyan
-            "  [INFO] Checking namespace providers at $namespacePath" | Out-File $LogFile -Append
+        Get-ChildItem -Path $entriesPath -ErrorAction SilentlyContinue | ForEach-Object {
+            $entryKey = $_
+            $props = Get-ItemProperty -Path $entryKey.PSPath -ErrorAction SilentlyContinue
+            $isVMware = $false
 
-            # Enumerate all catalog entries
-            $entries = Get-ChildItem -Path $namespacePath -ErrorAction SilentlyContinue
-            $found = $false
-
-            foreach ($entry in $entries) {
-                try {
-                    $providerId = (Get-ItemProperty -Path $entry.PSPath -Name "ProviderId" -ErrorAction SilentlyContinue).ProviderId
-
-                    if ($providerId -and ($providerId -replace '[{}]','') -eq $VMwareVsockGUID) {
-                        Write-Host "  [FOUND] VMware vSockets namespace entry: $($entry.PSChildName)" -ForegroundColor Yellow
-                        "  [FOUND] VMware vSockets in $($entry.PSPath)" | Out-File $LogFile -Append
-
-                        # Delete the entire catalog entry
-                        Remove-Item -Path $entry.PSPath -Recurse -Force -ErrorAction Stop
-
-                        Write-Host "  [SUCCESS] Deleted namespace entry: $($entry.PSChildName)" -ForegroundColor Green
-                        "  [SUCCESS] Deleted $($entry.PSPath)" | Out-File $LogFile -Append
-                        $TotalDeleted++
-                        $found = $true
+            # PackedCatalogItem holds the provider path + GUID blob
+            if ($props -and $props.PackedCatalogItem -is [byte[]]) {
+                if (Test-BytesContain -Haystack $props.PackedCatalogItem -Needle $guidBytes) {
+                    $isVMware = $true
+                }
+            }
+            # Some namespace entries expose the GUID as a string value
+            if (-not $isVMware) {
+                foreach ($v in $props.PSObject.Properties) {
+                    if ($v.Value -is [string] -and $v.Value -match '570ADC4B-67B2-42CE-92B2-ACD33D88D842') {
+                        $isVMware = $true; break
                     }
-                } catch {
-                    Write-Host "  [ERROR] Failed to process entry $($entry.PSChildName): $($_.Exception.Message)" -ForegroundColor Red
-                    "  [ERROR] Failed to process $($entry.PSPath): $($_.Exception.Message)" | Out-File $LogFile -Append
                 }
             }
 
-            if (-not $found) {
-                Write-Host "  [OK] No VMware vSockets namespace entries found" -ForegroundColor Green
-                "  [OK] No VMware vSockets found in namespace catalog" | Out-File $LogFile -Append
-                $TotalNotFound++
-            }
-        } else {
-            Write-Host "  [INFO] Namespace catalog not found (may not exist)" -ForegroundColor Gray
-            "  [INFO] $namespacePath does not exist" | Out-File $LogFile -Append
-            $TotalNotFound++
-        }
-
-        # Protocol providers path
-        $protocolPath = "HKLM:\SYSTEM\$controlSetName\Services\WinSock2\Parameters\Protocol_Catalog9\Catalog_Entries"
-
-        if (Test-Path $protocolPath) {
-            Write-Host "  [INFO] Checking protocol providers..." -ForegroundColor Cyan
-            "  [INFO] Checking protocol providers at $protocolPath" | Out-File $LogFile -Append
-
-            # Enumerate all protocol entries
-            $entries = Get-ChildItem -Path $protocolPath -ErrorAction SilentlyContinue
-            $found = $false
-
-            foreach ($entry in $entries) {
+            if ($isVMware) {
                 try {
-                    $providerId = (Get-ItemProperty -Path $entry.PSPath -Name "ProviderId" -ErrorAction SilentlyContinue).ProviderId
-
-                    if ($providerId -and ($providerId -replace '[{}]','') -eq $VMwareVsockGUID) {
-                        Write-Host "  [FOUND] VMware vSockets protocol entry: $($entry.PSChildName)" -ForegroundColor Yellow
-                        "  [FOUND] VMware vSockets in $($entry.PSPath)" | Out-File $LogFile -Append
-
-                        # Delete the entire catalog entry
-                        Remove-Item -Path $entry.PSPath -Recurse -Force -ErrorAction Stop
-
-                        Write-Host "  [SUCCESS] Deleted protocol entry: $($entry.PSChildName)" -ForegroundColor Green
-                        "  [SUCCESS] Deleted $($entry.PSPath)" | Out-File $LogFile -Append
-                        $TotalDeleted++
-                        $found = $true
-                    }
+                    Remove-Item -Path $entryKey.PSPath -Recurse -Force -ErrorAction Stop
+                    Write-Output "[SUCCESS] Deleted $($entryKey.PSChildName) in $cat ($($cs.PSChildName))"
+                    $deleted++
                 } catch {
-                    Write-Host "  [ERROR] Failed to process entry $($entry.PSChildName): $($_.Exception.Message)" -ForegroundColor Red
-                    "  [ERROR] Failed to process $($entry.PSPath): $($_.Exception.Message)" | Out-File $LogFile -Append
+                    Write-Output "[WARNING] Failed to delete $($entryKey.Name): $($_.Exception.Message)"
                 }
             }
-
-            if (-not $found) {
-                Write-Host "  [OK] No VMware vSockets protocol entries found" -ForegroundColor Green
-                "  [OK] No VMware vSockets found in protocol catalog" | Out-File $LogFile -Append
-            }
-        } else {
-            Write-Host "  [INFO] Protocol catalog not found (may not exist)" -ForegroundColor Gray
-            "  [INFO] $protocolPath does not exist" | Out-File $LogFile -Append
         }
-
-        Write-Host ""
     }
-
-} catch {
-    Write-Host "[ERROR] Failed to enumerate ControlSets: $($_.Exception.Message)" -ForegroundColor Red
-    "[ERROR] Exception: $($_.Exception.Message)" | Out-File $LogFile -Append
-    exit 1
 }
 
-Write-Host ""
-Write-Host "===============================================================" -ForegroundColor Cyan
-Write-Host "  Winsock Registry Cleanup Summary" -ForegroundColor Cyan
-Write-Host "===============================================================" -ForegroundColor Cyan
-Write-Host "  ControlSets scanned:  $($ControlSets.Count)"
-Write-Host "  Registry entries deleted: $TotalDeleted"
-Write-Host "  ControlSets with no entries: $TotalNotFound"
-Write-Host "===============================================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Output "=== Winsock catalog cleanup finished. Entries deleted: $deleted ==="
 
-"" | Out-File $LogFile -Append
-"[SUMMARY] Scanned: $($ControlSets.Count), Deleted: $TotalDeleted, Not Found: $TotalNotFound" | Out-File $LogFile -Append
-"[COMPLETE] Winsock registry cleanup finished at $(Get-Date)" | Out-File $LogFile -Append
-"===============================================================" | Out-File $LogFile -Append
-
-if ($TotalDeleted -gt 0) {
-    Write-Host "[SUCCESS] Deleted VMware vSockets from $TotalDeleted registry location(s)" -ForegroundColor Green
-} else {
-    Write-Host "[OK] All Winsock registry entries were already clean" -ForegroundColor Green
-}
-
-Write-Host ""
-Write-Host "Log file: $LogFile"
-Write-Host ""
-
+if ($deleted -gt 0) { exit 3010 }
 exit 0

@@ -1,0 +1,38 @@
+# Canonical list of known VMware driver/service short names.
+# Most entries are derived from the service paths and "VMware Drivers" status
+# keys already present in reg/vmware_registry_entries.txt, so it starts in
+# sync with the registry cleanup list. A few (vm3dmp, vmaudio, vmvss) come
+# from Broadcom KB 315629's manual-uninstall driver/service list instead.
+# Matching against this list is case-insensitive and used as a widening check
+# (in addition to, never instead of, the existing "does sc qc output mention
+# VMware" heuristic) by services/manage_vmware_services.bat.
+#
+# Update this list alongside reg/vmware_registry_entries.txt when a new
+# VMware component is added.
+vmci
+vmhgfs
+vmmouse
+vmusbmouse
+vmrawdsk
+vmxnet3
+vmxnet3ndis6
+pvscsi
+vmmemctl
+svga_wddm
+efifw
+vmwefifw
+vsock
+vsepflt
+vnetwfp
+vmwtimeprovider
+vmstatsprovider
+vmupgradehelper
+vgauth
+cblauncher
+vmtools
+vm3dmp
+vm3dmp_loader
+vm3dmp-debug
+vm3dmp-stats
+vmaudio
+vmvss
