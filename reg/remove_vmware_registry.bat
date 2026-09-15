@@ -1,22 +1,33 @@
 @echo off
-:: ===============================================================
-:: remove_vmware_registry.cmd
-:: Remove all VMware-related registry entries
-:: Processes embedded registry keys and values
-:: Maps all entries to HKEY_LOCAL_MACHINE (HKLM)
-:: Handles both key deletions and individual value deletions
-:: ===============================================================
+rem ===============================================================
+rem remove_vmware_registry.cmd
+rem Remove all VMware-related registry entries
+rem Entries are read from vmware_registry_entries.txt (shared with
+rem query_vmware_registry.bat) so both scripts stay in sync.
+rem Maps all entries to HKEY_LOCAL_MACHINE (HKLM)
+rem Handles both key deletions and individual value deletions
+rem ===============================================================
 
 setlocal enabledelayedexpansion
 
-REM =============================
-REM Check for admin privileges
-REM =============================
+rem =============================
+rem Check for admin privileges
+rem =============================
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: This script must be run as Administrator!
     echo Please right-click and select "Run as administrator"
-    pause
+rem    pause
+    exit /b 1
+)
+
+rem --- Get script directory ---
+set "SCRIPT_DIR=%~dp0"
+set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+set "ENTRIES_FILE=%SCRIPT_DIR%\vmware_registry_entries.txt"
+
+if not exist "%ENTRIES_FILE%" (
+    echo [ERROR] Registry entries file not found: %ENTRIES_FILE%
     exit /b 1
 )
 
@@ -27,8 +38,9 @@ echo   Run as Administrator
 echo ===============================================================
 echo.
 
-:: --- Initialize counters ---
+rem --- Initialize counters ---
 set /a DELETED=0
+set /a NOT_FOUND=0
 set /a ERRORS=0
 
 echo ==========================================
@@ -36,196 +48,15 @@ echo  Processing registry entries
 echo ==========================================
 echo.
 
-:: ===============================================================
-:: Embedded Registry Entries
-:: Format: call :DeleteRegistryEntry "HKLM\Path" "ValueName"
-:: Empty ValueName means delete entire key
-:: ===============================================================
-
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\shell\open\command" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo" "IconsVisible"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE" "LocalizedString"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo" "ReinstallCommand"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo" "HideIconsCommand"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Classes\Applications\VMwareHostOpen.exe\shell\open\command" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo" "ShowIconsCommand"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\DefaultIcon" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocFile\shell\open\command" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocURL\shell\open\command" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "sftp"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "ftp"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations" ".htm"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "news"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "http"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities" "ApplicationDescription"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\RegisteredApplications" "VMware Host Open"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocURL" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocFile" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations" ".shtml"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "mailto"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations" ".xhtml"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "feed"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "https"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "telnet"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations" ".xht"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations" ".html"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations" "ssh"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\Startmenu" "StartmenuInternet"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmtools" "*"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmtools" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmtools" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\networkprovider" "Name"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\networkprovider" "ProviderPath"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\networkprovider" "DeviceName"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\parameters" "ServerName"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\parameters" "ShareName"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware VGAuth" "PreferencesFile"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Tools" "InstallPath"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vnetWFP" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vsepflt" "*"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vsepflt" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vnetWFP" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider" "Enabled"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vnetWFP" "*"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider" "*"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vsepflt" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\Classes\CLSID\{C73DA087-EDDB-4a7c-B216-8EF8A3B92C7B}\InprocServer32" ""
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider" "InputProvider"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider" "DllName"
-call :DeleteRegistryEntry "HKLM\Software\VMware, Inc.\VMware Tools\VMUpgradeHelper" "-"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider" "CategoryMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider" "CategoryCount"
-call :DeleteRegistryEntry "HKLM\Software\VMware, Inc.\VMware Tools\GuestIntrospection" "-"
-call :DeleteRegistryEntry "HKLM\Software\VMware, Inc.\VMware Tools\GuestStoreUpgrade" "-"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMUpgradeHelper" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMUpgradeHelper" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VGAuth" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VGAuth" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMware Tools" "EventMessageFile"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMware Tools" "TypesSupported"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters" "CommonAppData"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters" "PrevBootMode"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters" "CacheDir"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters" "Windir"
-
-:: --- VMCI Registry Entries (from export files) ---
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "Type"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "Start"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "ErrorControl"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "Tag"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "ImagePath"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "DisplayName"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "Group"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "Owners"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" "vwdk.installers"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum" "0"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum" "Count"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum" "NextInstance"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum" ""
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmci" ""
-
-:: --- VMMouse Registry Entries ---
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "Type"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "Start"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "ErrorControl"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "Tag"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "ImagePath"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "DisplayName"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "Group"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "Owners"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" "vwdk.installers"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum" "0"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum" "Count"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum" "NextInstance"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum" ""
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmmouse" ""
-
-:: --- VMUsbMouse Registry Entries (from export files) ---
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "Type"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "Start"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "ErrorControl"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "Tag"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "ImagePath"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "DisplayName"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "Group"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "Owners"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" "vwdk.installers"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse\Parameters" ""
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse" ""
-
-:: --- vsock Service Registry Entries ---
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Type"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Start"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "ErrorControl"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Tag"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "ImagePath"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "DisplayName"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Description"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Group"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "Owners"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" "vwdk.installers"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" "0"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" "Count"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" "NextInstance"
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Enum" ""
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock\Parameters" ""
-call :DeleteRegistryEntry "HKLM\SYSTEM\CurrentControlSet\Services\vsock" ""
-
-:: --- Delete vsock from ALL ControlSets (prevent reboot re-registration) ---
-echo.
-echo [INFO] Cleaning vsock from all registry ControlSets...
-powershell.exe -ExecutionPolicy Bypass -File "%~dp0delete_vsock_all_controlsets.ps1"
-if %errorlevel% neq 0 (
-    echo [WARNING] ControlSet cleanup returned error code: %errorlevel%
-) else (
-    echo [SUCCESS] ControlSet cleanup completed
+rem ===============================================================
+rem Registry entries are defined in vmware_registry_entries.txt
+rem Format: REG_PATH|VALUE_NAME  ('<KEY>' means delete the whole key)
+rem Entries are ordered value-deletes-before-key-deletes so a key is
+rem only removed once its individually listed values are gone.
+rem ===============================================================
+for /f "usebackq eol=# tokens=1,2 delims=|" %%A in ("%ENTRIES_FILE%") do (
+    call :DeleteRegistryEntry "%%A" "%%B"
 )
-echo.
-
-:: --- Delete Winsock registry entries from ALL ControlSets (prevent catalog rebuild) ---
-echo.
-echo [INFO] Cleaning Winsock registry entries from all ControlSets...
-powershell.exe -ExecutionPolicy Bypass -File "%~dp0delete_winsock_registry.ps1"
-if %errorlevel% neq 0 (
-    echo [WARNING] Winsock registry cleanup returned error code: %errorlevel%
-) else (
-    echo [SUCCESS] Winsock registry cleanup completed
-)
-echo.
-
-:: --- VMware Software Registry Entries (from vmwreg.txt) ---
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\CbLauncher" "Cb.LauncherVersion"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\CbLauncher" "Cb.InstallStatus"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\CbLauncher" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "VmciHostDevInst"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmci.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmci.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vsock.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vsock.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vsockSys.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vsockDll.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "efifw.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "efifw.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmxnet3.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmxnet3.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "pvscsi.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "pvscsi.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmusbmouse.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmusbmouse.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmmouse.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmmouse.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmmemctl.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "vmmemctl.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "svga_wddm.status"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" "svga_wddm.installPath"
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Drivers" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware Tools" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc.\VMware VGAuth" ""
-call :DeleteRegistryEntry "HKLM\SOFTWARE\VMware, Inc." ""
 
 echo.
 echo ===============================================================
@@ -234,61 +65,64 @@ echo ===============================================================
 echo.
 echo Summary:
 echo   Deleted: %DELETED% entries
+echo   Not Found: %NOT_FOUND% entries
 echo   Errors: %ERRORS% entries
 echo ===============================================================
-echo.
-echo ===============================================================
-echo  Post-Registry Winsock Cleanup
-echo ===============================================================
-echo.
-echo [INFO] Running Winsock cleanup to remove any re-registered providers...
-echo.
 
-:: Call PowerShell script to clean up Winsock catalog after registry deletion
-powershell.exe -ExecutionPolicy Bypass -File "%~dp0cleanup_winsock_after_registry.ps1"
-
-if %errorlevel% neq 0 (
-    echo [WARNING] Winsock cleanup script returned error code: %errorlevel%
-    echo [INFO] Continuing anyway - check winsock_cleanup_post_registry.log for details
-) else (
-    echo [SUCCESS] Winsock cleanup completed
+rem Exit deterministically off the real ERRORS counter. Without an explicit
+rem exit, a bare "goto :EOF" would return whatever errorlevel the loop's last
+rem command left behind - typically 1 from the final entry's "reg query" when
+rem it was NOT FOUND - so a clean run (Errors: 0) would still report failure.
+if %ERRORS% gtr 0 (
+    exit /b 1
 )
+exit /b 0
 
-echo.
-goto :EOF
-
-:: --- Subroutine: Delete registry entry ---
+rem --- Subroutine: Delete registry entry ---
 :DeleteRegistryEntry
 setlocal enabledelayedexpansion
 set "REG_PATH=%~1"
 set "VAL_NAME=%~2"
-set "RESULT_VAR=RESULT"
+rem Both <KEY> and * mean "delete the whole key". * cannot be a literal
+rem value delete: reg query /v * matches all values (wildcard) so it looks
+rem present, but reg delete /v * has no wildcard and fails - the key is what
+rem was always meant. Normalise both to the empty-name (whole-key) path.
+if /i "!VAL_NAME!"=="<KEY>" set "VAL_NAME="
+if "!VAL_NAME!"=="*" set "VAL_NAME="
 
-:: Handle registry deletion based on whether Name field is empty
+rem Handle registry deletion based on whether Name field is empty
 if "!VAL_NAME!"=="" (
-    :: Empty name means default value - delete the entire key
+    rem Empty name means delete the entire key. Pre-check existence first,
+    rem mirroring the value-delete branch: an absent key is the desired end
+    rem state (usually already removed recursively by an earlier parent-key
+    rem delete), so report it as NOT FOUND rather than a spurious ERROR.
+    rem Only a key that exists but refuses to delete is a real ERROR.
     echo [DELETE KEY] !REG_PATH!
-    reg delete "!REG_PATH!" /f >nul 2>&1
-    if !errorlevel! equ 0 (
-        echo [SUCCESS] Deleted key: !REG_PATH!
-        set "RESULT=DELETED"
+    reg query "!REG_PATH!" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo [NOT FOUND] Key does not exist: !REG_PATH!
+        set "RESULT=NOT_FOUND"
     ) else (
-        echo [ERROR] Failed to delete key: !REG_PATH!
-        set "RESULT=ERROR"
-    )
-) else (
-    :: Specific value name - delete just that value
-    echo [DELETE VALUE] !REG_PATH!\!VAL_NAME!
-    reg delete "!REG_PATH!" /v "!VAL_NAME!" /f >nul 2>&1
-    if !errorlevel! equ 0 (
-        echo [SUCCESS] Deleted value: !REG_PATH!\!VAL_NAME!
-        set "RESULT=DELETED"
-    ) else (
-        :: If value deletion fails, try deleting parent key
-        echo [WARNING] Value not found, attempting to delete parent key: !REG_PATH!
         reg delete "!REG_PATH!" /f >nul 2>&1
         if !errorlevel! equ 0 (
-            echo [SUCCESS] Deleted parent key: !REG_PATH!
+            echo [SUCCESS] Deleted key: !REG_PATH!
+            set "RESULT=DELETED"
+        ) else (
+            echo [ERROR] Failed to delete key: !REG_PATH!
+            set "RESULT=ERROR"
+        )
+    )
+) else (
+    rem Specific value name - delete just that value (never escalate to the parent key)
+    echo [DELETE VALUE] !REG_PATH!\!VAL_NAME!
+    reg query "!REG_PATH!" /v "!VAL_NAME!" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo [NOT FOUND] Value does not exist: !REG_PATH!\!VAL_NAME!
+        set "RESULT=NOT_FOUND"
+    ) else (
+        reg delete "!REG_PATH!" /v "!VAL_NAME!" /f >nul 2>&1
+        if !errorlevel! equ 0 (
+            echo [SUCCESS] Deleted value: !REG_PATH!\!VAL_NAME!
             set "RESULT=DELETED"
         ) else (
             echo [ERROR] Failed to delete: !REG_PATH!\!VAL_NAME!
@@ -297,11 +131,13 @@ if "!VAL_NAME!"=="" (
     )
 )
 
-:: Return result to parent scope and update counters
+rem Return result to parent scope and update counters
 for %%R in ("!RESULT!") do (
     endlocal
     if "%%~R"=="DELETED" (
         set /a DELETED+=1
+    ) else if "%%~R"=="NOT_FOUND" (
+        set /a NOT_FOUND+=1
     ) else if "%%~R"=="ERROR" (
         set /a ERRORS+=1
     )

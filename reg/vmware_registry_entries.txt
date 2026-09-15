@@ -1,0 +1,145 @@
+# VMware registry cleanup entries — consumed by both query_vmware_registry.bat
+# and remove_vmware_registry.bat. One entry per line: REG_PATH|VALUE_NAME
+# Use <KEY> (or *) as VALUE_NAME to mean "delete the whole key".
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\shell\open\command|<KEY>
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE|<KEY>
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo|IconsVisible
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE|LocalizedString
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo|ReinstallCommand
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo|HideIconsCommand
+HKLM\SOFTWARE\Classes\Applications\VMwareHostOpen.exe\shell\open\command|<KEY>
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\InstallInfo|ShowIconsCommand
+HKLM\SOFTWARE\Clients\StartmenuInternet\VMWAREHOSTOPEN.EXE\DefaultIcon|<KEY>
+HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocFile\shell\open\command|<KEY>
+HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocURL\shell\open\command|<KEY>
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|sftp
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|ftp
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations|.htm
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|news
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|http
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities|ApplicationDescription
+HKLM\SOFTWARE\RegisteredApplications|VMware Host Open
+HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocURL|<KEY>
+HKLM\SOFTWARE\Classes\VMwareHostOpen.AssocFile|<KEY>
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations|.shtml
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|mailto
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations|.xhtml
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|feed
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|https
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|telnet
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations|.xht
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\FileAssociations|.html
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\UrlAssociations|ssh
+HKLM\SOFTWARE\VMware, Inc.\VMwareHostOpen\Capabilities\Startmenu|StartmenuInternet
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmtools|*
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmtools|TypesSupported
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmtools|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\networkprovider|Name
+HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\networkprovider|ProviderPath
+HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\networkprovider|DeviceName
+HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\parameters|ServerName
+HKLM\SYSTEM\CurrentControlSet\Services\vmhgfs\parameters|ShareName
+HKLM\SOFTWARE\VMware, Inc.\VMware VGAuth|PreferencesFile
+HKLM\SOFTWARE\VMware, Inc.\VMware Tools|InstallPath
+HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vnetWFP|TypesSupported
+HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vsepflt|*
+HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vsepflt|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vnetWFP|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider|Enabled
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vnetWFP|*
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider|TypesSupported
+HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider|*
+HKLM\SYSTEM\CurrentControlSet\services\eventLog\System\vsepflt|TypesSupported
+HKLM\SOFTWARE\Classes\CLSID\{C73DA087-EDDB-4a7c-B216-8EF8A3B92C7B}\InprocServer32|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider|InputProvider
+HKLM\SYSTEM\CurrentControlSet\Services\W32Time\TimeProviders\vmwTimeProvider|DllName
+HKLM\Software\VMware, Inc.\VMware Tools\VMUpgradeHelper|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider|CategoryMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\vmStatsProvider|CategoryCount
+HKLM\Software\VMware, Inc.\VMware Tools\GuestIntrospection|<KEY>
+HKLM\Software\VMware, Inc.\VMware Tools\GuestStoreUpgrade|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMUpgradeHelper|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMUpgradeHelper|TypesSupported
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VGAuth|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VGAuth|TypesSupported
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMware Tools|EventMessageFile
+HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\Application\VMware Tools|TypesSupported
+HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters|CommonAppData
+HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters|PrevBootMode
+HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters|CacheDir
+HKLM\SYSTEM\CurrentControlSet\Services\vmrawdsk\Parameters|Windir
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|Type
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|Start
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|ErrorControl
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|Tag
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|ImagePath
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|DisplayName
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|Group
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|Owners
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|vwdk.installers
+HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum|0
+HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum|Count
+HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum|NextInstance
+HKLM\SYSTEM\CurrentControlSet\Services\vmci\Enum|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\vmci|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|Type
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|Start
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|ErrorControl
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|Tag
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|ImagePath
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|DisplayName
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|Group
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|Owners
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|vwdk.installers
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum|0
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum|Count
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum|NextInstance
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse\Enum|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\vmmouse|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|Type
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|Start
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|ErrorControl
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|Tag
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|ImagePath
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|DisplayName
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|Group
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|Owners
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|vwdk.installers
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse\Parameters|<KEY>
+HKLM\SYSTEM\CurrentControlSet\Services\vmusbmouse|<KEY>
+HKLM\SOFTWARE\VMware, Inc.\CbLauncher|Cb.LauncherVersion
+HKLM\SOFTWARE\VMware, Inc.\CbLauncher|Cb.InstallStatus
+HKLM\SOFTWARE\VMware, Inc.\CbLauncher|<KEY>
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|VmciHostDevInst
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmci.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmci.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vsock.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vsock.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vsockSys.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vsockDll.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|efifw.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|efifw.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmxnet3.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmxnet3.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|pvscsi.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|pvscsi.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmusbmouse.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmusbmouse.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmmouse.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmmouse.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmmemctl.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|vmmemctl.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|svga_wddm.status
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|svga_wddm.installPath
+HKLM\SOFTWARE\VMware, Inc.\VMware Drivers|<KEY>
+HKLM\SOFTWARE\VMware, Inc.\VMware Tools|<KEY>
+HKLM\SOFTWARE\VMware, Inc.\VMware VGAuth|<KEY>
+HKLM\SOFTWARE\VMware, Inc.|<KEY>
+# Startup entry that relaunches "vmtoolsd.exe -n vmusr" at every login, which
+# reloads (and locks) the vmusr/common Tools plugins. Value delete only - the
+# shared Run key itself is never removed. Wow6432Node variant is a harmless
+# NOT FOUND when absent (Tools is 64-bit, so the entry is normally native).
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run|VMware User Process
+HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run|VMware User Process
